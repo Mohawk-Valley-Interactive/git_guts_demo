@@ -1,0 +1,461 @@
+#!/bin/sh
+
+red='\e[0,31m'
+green='\e[0,32m'
+blue='\e[0,34m'
+cyan='\e[0,36m'
+magenta='\e[0,35m'
+yellow='e\[0,33m'
+clear='\e[0m'
+
+bold=$red
+norm=$clear
+
+firstShaDir=08/cf6101416f0ce0dda3c80e627f333854c4085c
+firstSha=08cf6101416f0ce0dda3c80e627f333854c4085c
+secondSha=e32092a83f837140c08e85a60ef16a6b2a208986
+thirdSha=55af8e5b36d666efb8281535bd98fe0f84275347
+firstTreeSha=ffe9ce5421c3a1cbd84a858f8f5696029574abdc
+secondTreeSha=1a69e2163b070d7b3f91f21e9426f8dd087e9ca2
+thirdTreeSha=e6d9c1dc4dbe8b76e2017f1be7cdbc252c4c664b
+firstCommitSha=''
+secondCommitSha=''
+thirdCommitSha=''
+
+function clean
+{
+  rm -rf .git
+  rm -rf *
+  rm -rf *.*
+}
+
+function newline
+{
+  printf "\n"
+}
+
+function boldtext
+{
+  printf "${bold}$1${norm}"
+}
+
+function pause
+{
+  printf "${cyan}"
+  printf "\nPress ENTER to continue... %s" $1
+  printf "${norm}"
+
+  read pause
+  clear
+}
+
+function clean_up
+{
+  printf "Cleaning up...\n"
+  clean
+  pause
+}
+
+function printDiagram_blobs
+{
+  printf " +---------------------+\n"
+  printf " |        blob         |\n"
+  printf " |---------------------|\n"
+  printf " | 'version 2'         |\n"
+  printf " |                     |\n"
+  printf " +---------------------+\n"
+  printf "\n"
+  printf "\n"
+  printf " +---------------------+\n"
+  printf " |        blob         |\n"
+  printf " |---------------------|\n"
+  printf " | 'version 1'         |\n"
+  printf " |                     |\n"
+  printf " +---------------------+\n"
+  printf "\n"
+  printf "\n"
+  printf " +---------------------+\n"
+  printf " |        blob         |\n"
+  printf " |---------------------|\n"
+  printf " | 'test content'      |\n"
+  printf " |                     |\n"
+  printf " +---------------------+\n"
+  pause
+}
+
+function printDiagram_trees
+{
+  printf " +---------------------+                  +---------------------+\n"
+  printf " |       tree          |         +------->|        blob         |\n"
+  printf " |---------------------|         |        |---------------------|\n"
+  printf " | + bak dir (1st tree)+---------+    +-->| 'new text'          |\n"
+  printf " |   test.txt          |         |    |   |                     |\n"
+  printf " |   new.txt           |         |    |   +---------------------+\n"
+  printf " +---------------------+         |    |\n"
+  printf "                                 |    |\n"
+  printf " +---------------------+         |    |   +---------------------+\n"
+  printf " |       tree          |         |------->|        blob         |\n"
+  printf " |---------------------|         |    |   |---------------------|\n"
+  printf " | * test.txt          +---------|----+-->| 'version 2'         |\n"
+  printf " | + new.txt           |         |        |                     |\n"
+  printf " +---------------------+         |        +---------------------+\n"
+  printf "                                 |\n"
+  printf "                                 |\n"
+  printf " +---------------------+         |        +---------------------+\n"
+  printf " |       tree          |<--------+        |        blob         |\n"
+  printf " |---------------------|                  |---------------------|\n"
+  printf " | + test.txt          +----------------->| 'version 1'         |\n"
+  printf " |                     |                  |                     |\n"
+  printf " +---------------------+                  +---------------------+\n"
+  pause
+}
+
+function printDiagram_commits
+{
+  printf " +---------------------+       +---------------------+                  +---------------------+\n"
+  printf " |       commit        |       |       tree          |         +------->|        blob         |\n"
+  printf " |---------------------|       |---------------------|         |        |---------------------|\n"
+  printf " | 'third commit'      +------>| + bak dir (1st tree)+---------+    +-->| 'new text'          |\n"
+  printf " |                     |       |   test.txt          |         |    |   |                     |\n"
+  printf " +---------+-----------+       |   new.txt           |         |    |   +---------------------+\n"
+  printf "           |                   +---------------------+         |    |\n"
+  printf "           v                                                   |    |\n"
+  printf " +---------------------+       +---------------------+         |    |   +---------------------+\n"
+  printf " |       commit        |       |       tree          |         |------->|        blob         |\n"
+  printf " |---------------------|       |---------------------|         |    |   |---------------------|\n"
+  printf " | 'second commit'     +------>| * test.txt          +---------|----+-->| 'version 2'         |\n"
+  printf " |                     |       | + new.txt           |         |        |                     |\n"
+  printf " +---------+-----------+       +---------------------+         |        +---------------------+\n"
+  printf "           |                                                   |\n"
+  printf "           v                                                   |\n"
+  printf " +---------------------+       +---------------------+         |        +---------------------+\n"
+  printf " |       commit        |       |       tree          |<--------+        |        blob         |\n"
+  printf " |---------------------|       |---------------------|                  |---------------------|\n"
+  printf " | 'first commit'      +------>| + test.txt          +----------------->| 'version 1'         |\n"
+  printf " |                     |       |                     |                  |                     |\n"
+  printf " +---------------------+       +---------------------+                  +---------------------+\n"
+  pause
+}
+
+function printDiagram_refs
+{
+  printf " +---------------------+       +---------------------+       +---------------------+\n"
+  printf " |       branch        |       |       commit        |       |       tree          |\n"
+  printf " |---------------------|       |---------------------|       |---------------------|\n"
+  printf " |       master        +------>| 'third commit'      +------>| + bak dir (1st tree)+\n"
+  printf " |                     |       |                     |       |   test.txt          |\n"
+  printf " +---------------------+       +---------+-----------+       |   new.txt           |\n"
+  printf "           ^                             |                   +---------------------+\n"
+  printf "           |                             v                                          \n"
+  printf " +---------------------+       +---------------------+       +---------------------+\n"
+  printf " |        REF          |       |       commit        |       |       tree          |\n"
+  printf " |---------------------|       |---------------------|       |---------------------|\n"
+  printf " |       HEAD          |       | 'second commit'     +------>| * test.txt          +\n"
+  printf " |                     |       |                     |       | + new.txt           |\n"
+  printf " +---------------------+       +---------+-----------+       +---------------------+\n"
+  printf "                                         |                                          \n"
+  printf "                                         v                                          \n"
+  printf " +---------------------+       +---------------------+       +---------------------+\n"
+  printf " |         tag         |       |       commit        |       |       tree          |\n"
+  printf " |---------------------|       |---------------------|       |---------------------|\n"
+  printf " | v 1.0               +------>| 'first commit'      +------>| + test.txt          +\n"
+  printf " |                     |       |                     |       |                     |\n"
+  printf " +---------------------+       +---------------------+       +---------------------+\n"
+  pause
+}
+
+function step_1
+{
+  pause
+  
+  printf "Git is a ${bold}comment-addressable file system${norm}.\n\n"
+  printf "__What does that mean?__\n\n"
+  printf "It means that at the core of ${bold}Git is a simple key-value data store${norm}.\n"
+  printf "You can insert any kind of content into it and it wil give you back\n"
+  printf "a key that you can use to retrieve the content again at any time.\n"
+
+  pause
+}
+
+function step_2
+{
+  command="git init"
+  printf "$ $command\t\t\t${bold}<--Initializes the current diretory to be used as a Git repository.${norm}\n"
+  ${command}
+
+  newline
+  printf "$ ls -l .git\t\t\t${bold}<--Notice that the 'meat' of this walkthrough lives in the objects and refs directories.${norm}\n"
+  ls -l .git
+
+  newline
+  command="find .git/objects "
+  printf "$ $command\t\t${bold}<--Shows files contained in the '.git/objects' directory.${norm}\n"
+  ${command} 
+
+  newline
+  command="find .git/objects -type f"
+  printf "$ $command\t${bold}<--Same as above but only shows files (no directories)${norm}\n"
+  ${command} 
+
+  printf "\n${bold}Object types${norm}\n"
+  printf "* blob\n* tree\n* commit\n* tag (annotated & signed only)\n\n"
+
+  printf "${bold}Reference types${norm}\n"
+  printf "* branch\n* tag (simple)\n* remote\n"
+
+  pause
+}
+
+function step_3
+{
+  boldtext "--Blobs--\n"
+  printf "Blobs are simply the guts of every file you have (sans name).\n"
+  printf "They do not have names but simply content. We will get to how\n"
+  printf "Git knows what content goes where (using tree objects) in a bit...\n"
+
+  pause
+
+  printf "printf 'test content' | git hash-object -w --stdin\n"
+  boldtext "^* printf writes input to standard out.\n"
+  boldtext "^* git hash-object creates an SHA tag from input.\n"
+  boldtext "^  + '-w' instructs the command to also store the object passed in.\n"
+  boldtext "^  + '--stdin' instructs the command to take input from standard input.\n"
+  printf "test content" | git hash-object -w --stdin
+
+  command="find .git/objects -type f"
+  printf "\n$ $command\n"
+  ${command} 
+  printf "${bold}^--NOTE: We now have an object here! Let's look inside!${norm}\n"
+  printf "\n$ cat .git/objects/$firstShaDir\n"
+  cat .git/objects/$firstShaDir
+  boldtext "\nGAH! That's terrible! It's because these files are compressed (zlib FTW)!\n"
+  printf "To view the contents of these files we will use the ${bold}'cat-file'${norm} option like below...\n"
+  printf "$ git cat-file -t $firstSha\n"
+  git cat-file -t $firstSha
+  printf "$ git cat-file -s $firstSha\n"
+  git cat-file -s $firstSha
+  printf "$ git cat-file -p $firstSha\n"
+  git cat-file -p $firstSha
+  
+  boldtext "\n^* git cat-file provides content or type and size info for repo objects.\n"
+  boldtext "^  + '-p' Pretty-print the contents of <object> based on its type.\n"
+  boldtext "^  + '-s' Instead of the content, show the object size identified by <object>.\n"
+  boldtext "^  + '-t' Instead of the content, show the object type identified by <object>.\n"
+
+  pause
+}
+
+function step_4
+{
+  printf "$ printf 'version 1' > test.txt\n"
+  printf "version 1" > test.txt
+  printf "$ cat test.txt\n"
+  cat test.txt
+  printf "\n$ git hash-object -w test.txt\n"
+  git hash-object -w test.txt
+  printf "\n$ printf 'version 2' > test.txt\n"
+  printf "version 2" > test.txt
+  printf "$ cat test.txt\n"
+  cat test.txt
+  printf "\n$ git hash-object -w test.txt\n"
+  git hash-object -w test.txt
+  printf "\n$ find .git/objects -type f\n"
+  find .git/objects -type f
+
+  pause
+}
+
+function step_5
+{
+  printf "We now know how to feed data into our repository\n"
+  printf "via the ${bold}hash-object${norm} plumbing command.\n\n"
+  printf "We can use the ${bold}cat-file${norm} command to manually write our data\n"
+  printf "back into the file like so...\n\n"
+
+  printf "$ cat test.txt\n"
+  cat test.txt
+  printf "\n\n$ git cat-file -p $secondSha > test.txt\n"
+  git cat-file -p $secondSha > test.txt
+  printf "$ cat test.txt\n"
+  cat test.txt
+  printf "\n\n$ git cat-file -p $firstSha > test.txt\n"
+  git cat-file -p $firstSha > test.txt
+  printf "$ cat test.txt\n"
+  cat test.txt
+
+  newline
+  pause
+}
+
+function step_6
+{
+  boldtext "--Tree Objects--\n"
+  printf "We've dealt with blobs of data but they are simply\n"
+  printf "${bold}as good as files with no names.${norm}\n\n"
+
+  printf "While git has done a good job of storing data, it does not\n"
+  printf "yet know what to call these files. For this function we use\n"
+  printf "${bold}tree objects${norm}.\n\n"
+
+  printf "Tree objects not only determine file names for blobs, but\n"
+  printf "the entire ${bold}directory tree${norm}!\n"
+
+  pause
+}
+
+function step_7
+{
+  printf "$ git update-index --add --cacheinfo 100644 $secondSha test.txt\n"
+  boldtext "^--update-index registers file contents in the working tree into the index.\n"
+  boldtext "^    * --add Adds a file to the index if it doesn't exist already (default ignores new files).\n"
+  boldtext "^    * --cacheinfo Instructs the command to directly insert the specified info into the index.\n"
+  git update-index --add --cacheinfo 100644 $secondSha test.txt
+
+  printf "\n$ git write-tree\t${bold}<-- write-tree Creates a tree object from the current index.${norm}\n"
+  git write-tree
+
+  printf "\n$ git cat-file -p $firstTreeSha\n"
+  git cat-file -p $firstTreeSha
+  printf "$ git cat-file -s $firstTreeSha\n"
+  git cat-file -s $firstTreeSha
+  printf "$ git cat-file -t $firstTreeSha\n"
+  git cat-file -t $firstTreeSha
+  
+  newline
+  printf "FYI we've essentially created our first tree containing only one file (${bold}'test.txt'${norm} storing ${bold}'version 1'${norm})\n"
+
+  pause
+
+  printf "$ cat test.txt\n"
+  cat test.txt
+  printf "\n$ git cat-file -p $thirdSha > test.txt\n"
+  git cat-file -p $thirdSha > test.txt
+  printf "$ cat test.txt\n"
+  cat test.txt
+  
+  printf "\n\n$ printf 'new file' > new.txt"
+  printf "new file" > new.txt
+  printf "\n$ cat new.txt\n"
+  cat new.txt
+  
+  printf "\n\n$ git update-index test.txt"
+  git update-index test.txt
+  printf "\n$ git update-index --add new.txt"
+  git update-index --add new.txt
+  printf "\n$ git write-tree\n"
+  git write-tree
+  printf "\n$ git cat-file -p $secondTreeSha\n"
+  git cat-file -p $secondTreeSha
+
+  pause
+  
+  printf "$ git read-tree --prefix=bak $firstTreeSha\n"
+  boldtext "^-- read-tree reads tree objects into the index.\n"
+  git read-tree --prefix=bak $firstTreeSha
+  printf "\n$ git write-tree\n"
+  git write-tree
+  
+  printf "\ngit cat-file -p $thirdTreeSha\n"
+  git cat-file -p $thirdTreeSha
+  pause
+
+  boldtext "So now we should have 7 objects in our directory...\n"
+  printf "$ find .git/objects -type f"
+  find .git/objects -type f
+
+  boldtext "\nHere we see:\n"
+  boldtext "* 2 versions of test.txt\n"
+  boldtext "* new.txt\n"
+  boldtext "* an unnamed file containing the text 'test content'\n"
+  boldtext "* 3 trees\n"
+  boldtext "  + Version 1 of test.txt\n"
+  boldtext "  + Version 2 of test.txt + new.txt\n"
+  boldtext "  + bak directory added\n"
+  pause
+}
+
+function step_8
+{
+  boldtext "--Commits--\n"
+  printf "We now know how Git uses blobs and tree objects to store the\n"
+  printf "contents of a directory structure (many directory structures\n"
+  printf "to be more accurate). However, Git is a ${bold}version control system${norm}\n"
+  printf "and so needs a way to mark the history of a project over time...\n\n"
+  printf "Enter the commit object. Commits are objects who do the following\n"
+  printf "* Point to a tree object that describes the working directory's contents.\n"
+  printf "* Point to parent commit objects (can be none for the initial commit up to many)\n"
+  printf "* Store information regarding the commit\n"
+  printf "  + Date and time of the commit.\n"
+  printf "  + User input commit message.\n"
+
+  pause
+}
+
+function step_9
+{
+  printf "$ printf 'first commit' | git commit-tree $firstTreeSha\n"
+  boldtext "^-- commit-tree creates a new commit object. '-p' specifies parent commits.\n"
+  firstCommitSha=`printf "first commit" | git commit-tree $firstTreeSha`
+  printf "$firstCommitSha\n"
+
+  newline
+  printf "$ git cat-file -t $firstCommitSha\n"
+  git cat-file -t $firstCommitSha
+  printf "$ git cat-file -s $firstCommitSha\n"
+  git cat-file -s $firstCommitSha
+  printf "$ git cat-file -p $firstCommitSha\n"
+  git cat-file -p $firstCommitSha
+
+  newline
+  pause
+
+  printf "$ printf 'second commit' | git commit-tree $secondTreeSha -p $firstCommitSha\n"
+  secondCommitSha=`printf "second commit" | git commit-tree $secondTreeSha -p $firstCommitSha`
+  printf "$secondCommitSha\n"
+  printf "\n$ printf 'third commit' | git commit-tree $thirdTreeSha -p $secondCommitSha\n"
+  thirdCommitSha=`printf "third commit" | git commit-tree $thirdTreeSha -p $secondCommitSha`
+  printf "$thirdCommitSha\n"
+
+  newline
+  printf "\n$ git log $thirdCommitSha\n"
+  git log $thirdCommitSha
+
+  pause
+}
+
+function step_10
+{
+  boldtext "--Branches--\n"
+  printf "We new have a better understanding of how blobs, trees, and commits are\n"
+  printf "stored in our repository (and their role in tying things together).\n"
+  printf "\nWe understand that we access versions of trees (and their blobs) via\n"
+  printf "commits. Unfortunately, we still access commits via very unfamiliar\n"
+  printf "SHA-1 tags.\n"
+  printf "\nGit provides shortcuts around this tedium via references.\n"
+  printf "The prime reference of Git is the ${bold}branches${norm}.\n"
+
+  pause
+}
+
+function step_
+{
+
+  pause
+}
+
+step_1
+step_2
+step_3
+step_4
+step_5
+printDiagram_blobs
+step_6
+step_7
+printDiagram_trees
+step_8
+step_9
+printDiagram_commits
+step_10
+#step_
+
+clean_up
