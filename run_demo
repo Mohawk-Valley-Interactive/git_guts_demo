@@ -1,5 +1,14 @@
 #!/bin/sh
 
+sandboxDir=sandbox
+if [ -d $sandboxDir ]
+then
+  rm -rf $sandboxDir 
+fi
+
+mkdir $sandboxDir
+cd $sandboxDir
+
 red='\e[0,31m'
 green='\e[0,32m'
 blue='\e[0,34m'
@@ -52,7 +61,9 @@ function pause
 function clean_up
 {
   printf "Cleaning up...\n"
-  clean
+  #clean
+  cd ..
+  rm -rf $sandboxDir
   pause
 }
 
