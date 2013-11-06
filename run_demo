@@ -371,7 +371,7 @@ function step_7
   pause
 
   boldtext "So now we should have 7 objects in our directory...\n"
-  printf "$ find .git/objects -type f"
+  printf "$ find .git/objects -type f\n"
   find .git/objects -type f
 
   boldtext "\nHere we see:\n"
