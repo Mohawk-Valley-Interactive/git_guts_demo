@@ -20,6 +20,7 @@ clear='\e[0m'
 bold=$red
 norm=$clear
 
+danglingObjectSha=''
 firstShaDir=08/cf6101416f0ce0dda3c80e627f333854c4085c
 firstSha=08cf6101416f0ce0dda3c80e627f333854c4085c
 secondSha=e32092a83f837140c08e85a60ef16a6b2a208986
@@ -30,6 +31,8 @@ thirdTreeSha=e6d9c1dc4dbe8b76e2017f1be7cdbc252c4c664b
 firstCommitSha=''
 secondCommitSha=''
 thirdCommitSha=''
+secondCommitTagRef=''
+danglingObjectTagHash=''
 
 function clean
 {
@@ -118,6 +121,14 @@ function printDiagram_trees
   printf " | + test.txt          +----------------->| 'version 1'         |\n"
   printf " |                     |                  |                     |\n"
   printf " +---------------------+                  +---------------------+\n"
+  printf "\n"
+  printf "\n"
+  printf "                                          +---------------------+\n"
+  printf "                                          |        blob         |\n"
+  printf "                                          |---------------------|\n"
+  printf "                                          | 'test content'      |\n"
+  printf "                                          |                     |\n"
+  printf "                                          +---------------------+\n"
   pause
 }
 
@@ -145,6 +156,49 @@ function printDiagram_commits
   printf " | 'first commit'      +------>| + test.txt          +----------------->| 'version 1'         |\n"
   printf " |                     |       |                     |                  |                     |\n"
   printf " +---------------------+       +---------------------+                  +---------------------+\n"
+  printf "\n"
+  printf "\n"
+  printf "                                                                        +---------------------+\n"
+  printf "                                                                        |        blob         |\n"
+  printf "                                                                        |---------------------|\n"
+  printf "                                                                        | 'test content'      |\n"
+  printf "                                                                        |                     |\n"
+  printf "                                                                        +---------------------+\n"
+  pause
+}
+
+function printDiagram_atags
+{
+  printf "                               +---------------------+       +---------------------+\n"
+  printf "                               |       commit        |       |       tree          |\n"
+  printf "                               |---------------------|       |---------------------|\n"
+  printf "                               | 'third commit'      +------>| + bak dir (1st tree)|\n"
+  printf "                               |                     |       |   test.txt          |\n"
+  printf "                               +---------+-----------+       |   new.txt           |\n"
+  printf "                                         |                   +---------------------+\n"
+  printf "                                         v                                          \n"
+  printf " +---------------------+       +---------------------+       +---------------------+\n"
+  printf " |         tag         |       |       commit        |       |       tree          |\n"
+  printf " |---------------------|       |---------------------|       |---------------------|\n"
+  printf " | v2                  +------>| 'second commit'     +------>| * test.txt          |\n"
+  printf " |                     |       |                     |       | + new.txt           |\n"
+  printf " +---------------------+       +---------+-----------+       +---------------------+\n"
+  printf "                                         |                                          \n"
+  printf "                                         v                                          \n"
+  printf "                               +---------------------+       +---------------------+\n"
+  printf "                               |       commit        |       |       tree          |\n"
+  printf "                               |---------------------|       |---------------------|\n"
+  printf "                               | 'first commit'      +------>| + test.txt          |\n"
+  printf "                               |                     |       |                     |\n"
+  printf "                               +---------------------+       +---------------------+\n"
+  printf "\n"
+  printf "\n"
+  printf " +---------------------+                                     +---------------------+\n"
+  printf " |         tag         |                                     |        blob         |\n"
+  printf " |---------------------|                                     |---------------------|\n"
+  printf " | dangling_file       +------------------------------------>| 'test content'      |\n"
+  printf " |                     |                                     |                     |\n"
+  printf " +---------------------+                                     +---------------------+\n"
   pause
 }
 
@@ -172,6 +226,14 @@ function printDiagram_refs
   printf " | v 1.0               +------>| 'first commit'      +------>| + test.txt          +\n"
   printf " |                     |       |                     |       |                     |\n"
   printf " +---------------------+       +---------------------+       +---------------------+\n"
+  printf "\n"
+  printf "\n"
+  printf "                                                             +---------------------+\n"
+  printf "                                                             |        blob         |\n"
+  printf "                                                             |---------------------|\n"
+  printf "                                                             | 'test content'      |\n"
+  printf "                                                             |                     |\n"
+  printf "                                                             +---------------------+\n"
   pause
 }
 
@@ -231,7 +293,7 @@ function step_3
   boldtext "^* git hash-object creates an SHA tag from input.\n"
   boldtext "^  + '-w' instructs the command to also store the object passed in.\n"
   boldtext "^  + '--stdin' instructs the command to take input from standard input.\n"
-  printf "test content" | git hash-object -w --stdin
+  danglingObjectSha=`printf "test content" | git hash-object -w --stdin`
 
   command="find .git/objects -type f"
   printf "\n$ $command\n"
@@ -436,6 +498,77 @@ function step_9
 
 function step_10
 {
+  boldtext "--Tags (Signed & Annotated)--\n"
+
+  printf "Without using any reference objects (the ${bold}second class${norm} objects we've\n"
+  printf "yet to cover) there is still no way to access different versions of\n"
+  printf "our tree other than via the hash values of the commits directly. While\n"
+  printf "certainly simple enough for a computer, the human mind requires something\n"
+  printf "human readable. Enter ${bold}tags${norm}...\n"
+  printf "\nA tag essentially points to a commit and bears a human readable name.\n"
+  printf "We will cover simple tags in a bit but for the moment let us finish our\n"
+  printf "tour of the Git's ${bold}first class objects${norm}.\n"
+  printf "\nAnnotated and signed tags are composed very similiarly to commits but with\n"
+  printf "a few differences.\n"
+  printf "  * Tags can point to any type of object (trees, blobs, commits, and even other tags).\n"
+  printf "    + Commits only point to trees.\n"
+  printf "    + The benefit of pointing to objects other than commits tend to be niche but here's one:\n"
+  printf "      - Tagging a blob containing a particular important file to be viewed via cat-file.\n"
+  printf "  * Tags do not have parents.\n"
+  printf "  * Annotated tags have the option to also be signed via GPG.\n"
+  
+  pause
+}
+
+function step_10_1
+{
+  printf "$ git tag -a v2 ${secondCommitSha} -m \"2nd commit.\"\n"
+  boldtext "^ No plumbing command here but note the flags:\n"
+  boldtext "^  * -a causes the tag command to create an annotated flag.\n"
+  boldtext "^    + -s would do the same but also cause the tag command to expect a GPG key.\n"
+  boldtext "^  * -m like with the commit command indicates that the text that follows is the message.\n\n"
+  git tag -a v2 ${secondCommitSha} -m "test message"
+  printf "$ cat .git/refs/tags/v2\n"
+  secondCommitTagRef=`cat .git/refs/tags/v2`
+  printf "${secondCommitTagRef}\n"
+  boldtext "^ Notice that the tag file does not contain the commit hash but a new hash (new object)!\n\n"
+  printf "$ git cat-file -t ${secondCommitTagRef}\n"
+  git cat-file -t ${secondCommitTagRef}
+  printf "$ git cat-file -s ${secondCommitTagRef}\n"
+  git cat-file -s ${secondCommitTagRef}
+  printf "$ git cat-file -p ${secondCommitTagRef}\n"
+  git cat-file -p ${secondCommitTagRef}
+  boldtext "^ Notice that the contents are similiar to a commit but specify what type of object the\n"
+  boldtext "^ tag points to as well as other relevant information including a message from the developer.\n"
+  boldtext "^ This is certainly more helpful than a single word description that you would get from a\n"
+  boldtext "^ lightweight tag.\n"
+
+  pause
+}
+
+function step_10_2
+{
+  printf "$ git tag -a dangling_blob ${danglingObjectSha} -m \"Dangling blob holds a test message\"\n"
+  boldtext "^ We're now going to do the same thing but to point to our dangling file.\n\n"
+  git tag -a dangling_blob ${danglingObjectSha} -m "Dangling blob holds a test message"
+  printf "$ cat .git/refs/tags/dangling_blob\n"
+  secondCommitTagRef=`cat .git/refs/tags/dangling_blob`
+  printf "${secondCommitTagRef}\n\n"
+  printf "$ git cat-file -t ${secondCommitTagRef}\n"
+  git cat-file -t ${secondCommitTagRef}
+  printf "$ git cat-file -s ${secondCommitTagRef}\n"
+  git cat-file -s ${secondCommitTagRef}
+  printf "$ git cat-file -p ${secondCommitTagRef}\n"
+  git cat-file -p ${secondCommitTagRef}
+  boldtext "^ Notice that the type is now indicated to be a blob. We can also use\n"
+  boldtext "^ the hash on the object line to take us to the content via 'git cat-file -p HASH'\n\n"
+  boldtext "^  * I figure you can mojo your way though a quick script to do that if you like.\n\n"
+
+  pause
+}
+
+function step_11
+{
   boldtext "--Branches--\n"
   printf "We new have a better understanding of how blobs, trees, and commits are\n"
   printf "stored in our repository (and their role in tying things together).\n"
@@ -467,6 +600,10 @@ step_8
 step_9
 printDiagram_commits
 step_10
-#step_
+step_10_1
+step_10_2
+printDiagram_atags
+step_11
+printDiagram_refs
 
 clean_up
