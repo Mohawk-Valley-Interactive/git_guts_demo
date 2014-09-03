@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 sandboxDir=sandbox
 if [ -d $sandboxDir ]
@@ -9,12 +9,12 @@ fi
 mkdir $sandboxDir
 cd $sandboxDir
 
-red='\e[0,31m'
-green='\e[0,32m'
-blue='\e[0,34m'
-cyan='\e[0,36m'
-magenta='\e[0,35m'
-yellow='e\[0,33m'
+red='\e[0;31m'
+green='\e[0;32m'
+blue='\e[0;34m'
+cyan='\e[0;36m'
+magenta='\e[0;35m'
+yellow='e\[0;33m'
 clear='\e[0m'
 
 bold=$red
