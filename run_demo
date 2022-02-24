@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 sandboxDir=sandbox
 if [ -d $sandboxDir ]
@@ -288,7 +288,7 @@ function step_3
 
   pause
 
-  printf "printf 'test content' | git hash-object -w --stdin\n"
+  printf "$ printf 'test content' | git hash-object -w --stdin\n"
   boldtext "^* printf writes input to standard out.\n"
   boldtext "^* git hash-object creates an SHA tag from input.\n"
   boldtext "^  + '-w' instructs the command to also store the object passed in.\n"
